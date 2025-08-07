@@ -1,7 +1,7 @@
 # coding=utf-8
 import os
 import time
-
+import datetime
 import requests
 from requests.adapters import HTTPAdapter
 
@@ -93,11 +93,7 @@ class VideoRecorder:
 
         # GUI
         if app.win_mode:
-            app.win.set_state(self.room, '未开播', color='#000000')
-
-        # 自动转码
-        # if config.is_auto_transcode():
-        #     transcode_manager.start_transcode(filename)
+            app.win.set_state(self.room, datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), color='#ff6d6d')
 
         # 再次检测是否在直播，防止因网络问题造成的提前停止录制
         # 如果是主动停止录制，则不立刻再次检查

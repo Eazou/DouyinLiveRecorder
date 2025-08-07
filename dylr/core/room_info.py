@@ -19,6 +19,7 @@ class RoomInfo:
     def is_going_on_live(self) -> bool:
         """ 是否在直播 """
         if not self.room_json or 'status' not in self.room_json:
+            logger.debug(f'room_json 为空 room_info.1')
             cookie_utils.record_cookie_failed()
             return False
         return self.room_json['status'] == 2

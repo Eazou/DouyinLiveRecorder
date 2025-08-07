@@ -4,6 +4,9 @@
 :date: 2023.01.13
 :brief: 录制管理
 """
+import json
+import os.path
+import datetime
 from dylr.core.recording import Recording
 from dylr.util import logger
 
@@ -54,6 +57,17 @@ def start_recording(room, room_info):
     if is_recording(room):
         logger.warning_and_print(f'{room.room_name}({room.room_id}) 已经在录制了')
         return
+    # 读取 JSON 文件
+    with open("rooms.json", 'r', encoding='UTF-8') as f:
+        data = json.load(f)
+    # 查找并修改指定 id 的项目
+    for item in data:
+        if item.get("id") == room.room_id:
+            item["lasttime"] = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            break
+    # 写回 JSON 文件
+    with open("rooms.json", 'w', encoding='UTF-8') as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
     recording = Recording(room, room_info)
     recording.start()
     recordings.append(recording)

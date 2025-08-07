@@ -90,7 +90,12 @@ def read_rooms() -> list:
             user_sec_id = room_json['user_sec_id']
         else:
             user_sec_id = None
-        res.append(Room(room_id, room_name, auto_record, record_danmu, important, user_sec_id))
+
+        if 'lasttime' in room_json:
+            lasttime = room_json['lasttime']
+        else:
+            lasttime = ""
+        res.append(Room(room_id, room_name, auto_record, record_danmu, important, user_sec_id, lasttime))
         if not app.win_mode:
             print(f'加载房间 {room_name}({room_id})')
         logger.info(f'loaded room: {room_name}({room_id}) '
@@ -113,7 +118,8 @@ def save_rooms(rooms=None):
             "auto_record": room.auto_record,
             "record_danmu": room.record_danmu,
             "important": room.important,
-            "user_sec_id": room.user_sec_id
+            "user_sec_id": room.user_sec_id,
+            "lasttime": room.lasttime
         })
     with open("rooms.json", "w", encoding='utf-8') as f:
         json.dump(rooms_json, f, indent=2, ensure_ascii=False)

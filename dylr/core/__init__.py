@@ -1,3 +1,3 @@
 # coding=utf-8
 
-version = "20240625"
+version = "20250807"

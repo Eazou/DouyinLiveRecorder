@@ -166,6 +166,7 @@ def check_room_using_api(room):
 
     room_json = dy_api.get_live_state_json(room.room_id)
     if room_json is None:
+        logger.debug(f'room_json 为空 monitor')
         cookie_utils.record_cookie_failed()
         return
     room_info = RoomInfo(room, room_json)

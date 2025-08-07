@@ -4,6 +4,8 @@
 :date: 2023.02.10
 :brief: 抖音api
 """
+from typing import Optional
+from urllib.parse import unquote, urlparse, parse_qs, urlencode, urlunparse
 import json
 import random
 import time
@@ -15,7 +17,16 @@ from dylr.core.room_info import RoomInfo
 from dylr.util import cookie_utils, logger, url_utils
 
 
-def get_api_url(room_id):
+def get_api_url(web_rid):
+        query = {
+            'web_rid': web_rid,
+            # 2025-08-01 服务端暂不校验以下参数的值，只校验参数存在
+            'enter_from': random.choice(['link_share', 'web_live']),
+            'a_bogus': '0',
+        }
+        return DouyinUtils.build_request_url(f"https://live.douyin.com/webcast/room/web/enter/", query)
+
+def get_api_url2(room_id):
     return 'https://live.douyin.com/webcast/room/web/enter/?aid=6383&live_id=1&device_platform=web&language=zh-CN' \
            '&enter_from=web_live&cookie_enabled=true&screen_width=1920&screen_height=1080&browser_language=zh-CN' \
            f'&browser_platform=Win32&browser_name=Chrome&browser_version=109.0.0.0&web_rid={room_id}' \
@@ -33,8 +44,10 @@ def find_stream_url(room):
 def get_live_state_json(room_id):
     api_url = get_api_url(room_id)
     req = requests.get(api_url, headers=get_request_headers(), proxies=get_proxies())
+    logger.debug(f'req结果:' + req.text)
     res = req.text
     if '系统繁忙，请稍后再试' in res:
+        logger.debug(f'系统繁忙，请稍后再试')
         cookie_utils.record_cookie_failed()
     try:
         info_json = json.loads(res)
@@ -162,6 +175,7 @@ def generate_random_str(randomlength):
 def is_going_on_live(room):
     room_json = get_live_state_json(room.room_id)
     if room_json is None:
+        logger.debug(f'room_json 为空 dy_api')
         cookie_utils.record_cookie_failed()
         return False
     room_info = RoomInfo(room, room_json)
@@ -187,3 +201,32 @@ def get_random_ua():
                            '99.0.4844.17', '98.0.4758.102', '98.0.4758.80', '98.0.4758.48', '97.0.4692.71']
     return f'"Mozilla/5.0 {random.choice(os_list)} AppleWebKit/537.36 (KHTML, like Gecko) ' \
            f'Chrome/{random.choice(chrome_version_list)} Safari/537.36"'
+
+
+
+class DouyinUtils:
+    # DOUYIN_USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36'
+    DOUYIN_USER_AGENT = get_random_ua()
+    DOUYIN_HTTP_HEADERS = {
+        'user-agent': DOUYIN_USER_AGENT
+    }
+    @staticmethod
+    def build_request_url(url: str, query: Optional[dict] = None) -> str:
+        parsed_url = urlparse(url)
+        existing_params = query or parse_qs(parsed_url.query)
+        existing_params['aid'] = ['6383']
+        existing_params['device_platform'] = ['web']
+        existing_params['browser_language'] = ['zh-CN']
+        existing_params['browser_platform'] = ['Win32']
+        existing_params['browser_name'] = [DouyinUtils.DOUYIN_USER_AGENT.split('/')[0]]
+        existing_params['browser_version'] = [DouyinUtils.DOUYIN_USER_AGENT.split(existing_params['browser_name'][0])[-1][1:]]
+        new_query_string = urlencode(existing_params, doseq=True)
+        new_url = urlunparse((
+            parsed_url.scheme,
+            parsed_url.netloc,
+            parsed_url.path,
+            parsed_url.params,
+            new_query_string,
+            parsed_url.fragment
+        ))
+        return new_url

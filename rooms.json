@@ -5,14 +5,7 @@
     "auto_record": true,
     "record_danmu": true,
     "important": true,
-    "user_sec_id": null
-  },
-  {
-    "id": 355523226983,
-    "name": "露娜的店",
-    "auto_record": true,
-    "record_danmu": true,
-    "important": true,
-    "user_sec_id": null
+    "user_sec_id": null,
+    "lasttime": "2025-08-07 10:32:25"
   }
 ]

@@ -11,7 +11,7 @@ import time
 import threading
 import traceback
 from functools import partial
-from tkinter import messagebox
+from tkinter import messagebox, Toplevel, Entry, Button, Label
 
 import requests
 
@@ -74,17 +74,63 @@ def find_by_web_rid(web_rid):
 
     if name is None or len(name) == 0:
         raise Exception()
-    room = Room(web_rid, name, True, True, False)
-    record_manager.rooms.append(room)
-    config.save_rooms()
 
-    logger.info_and_print(f'成功获取到房间{name}({web_rid})')
     if app.win_mode:
-        app.win.add_room(room)
-        messagebox.askokcancel("添加主播成功", f"房间Web_Sid: {web_rid} \n 主播名: {name}")
-
-    # 添加完房间立刻检查是否开播
-    threading.Thread(target=partial(monitor.check_room, room)).start()
+        # 创建自定义窗口
+        top = Toplevel()
+        top.title("添加主播成功")
+        top.geometry("300x150")
+        # 计算并设置窗口居中
+        top.update_idletasks()
+        parent_x = top.master.winfo_x()
+        parent_y = top.master.winfo_y()
+        parent_width = top.master.winfo_width()
+        parent_height = top.master.winfo_height()
+        x = parent_x + (parent_width - top.winfo_width()) // 2
+        y = parent_y + (parent_height - top.winfo_height()) // 2
+        top.geometry(f"300x150+{x}+{y}")
+        
+        Label(top, text=f"房间Web_Rid: {web_rid}").pack(pady=10)
+        Label(top, text="主播名:").pack()
+        
+        # 创建文本框，预填主播名称
+        name_entry = Entry(top)
+        name_entry.insert(0, name)
+        name_entry.pack(pady=5)
+        
+        def confirm():
+            # 获取文本框中的值
+            new_name = name_entry.get().strip()
+            if not new_name:
+                messagebox.showwarning("警告", "主播名不能为空！")
+                return  # 提前返回，不执行后面的代码
+            
+            try:
+                # 创建房间并保存
+                room = Room(web_rid, new_name, True, True, False)
+                record_manager.rooms.append(room)
+                config.save_rooms()
+                
+                logger.info_and_print(f'成功获取到房间{new_name}({web_rid})')
+                app.win.add_room(room)
+                
+                # 立刻检查是否开播
+                threading.Thread(target=partial(monitor.check_room, room)).start()
+            except Exception as e:
+                logger.error(f"添加房间时出错: {e}")
+                messagebox.showerror("错误", f"添加房间时出错: {e}")
+            finally:
+                top.destroy()  # 确保无论如何都会关闭对话框
+        Button(top, text="确定", command=confirm).pack(pady=10)
+    else:
+        # 非窗口模式直接保存
+        room = Room(web_rid, name, True, True, False)
+        record_manager.rooms.append(room)
+        config.save_rooms()
+        
+        logger.info_and_print(f'成功获取到房间{name}({web_rid})')
+        # 立刻检查是否开播
+        threading.Thread(target=partial(monitor.check_room, room)).start()
 
 
 def find_short(info):

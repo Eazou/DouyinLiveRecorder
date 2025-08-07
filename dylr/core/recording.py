@@ -26,6 +26,7 @@ class Recording:
         if self.room_info is None:
             room_json = dy_api.get_live_state_json(self.room.room_id)
             if room_json is None:
+                logger.debug(f'room_json 为空 recording.1')
                 cookie_utils.record_cookie_failed()
                 return False
             self.room_info = RoomInfo(self.room, room_json)
@@ -52,6 +53,7 @@ class Recording:
         """ 再次检查是否在直播，防止因为主播网络问题而造成断录 """
         room_json = dy_api.get_live_state_json(self.room.room_id)
         if room_json is None:
+            logger.debug(f'room_json 为空 recording.2')
             cookie_utils.record_cookie_failed()
             record_manager.recordings.remove(self)
             logger.debug(f'刷新 {self.room.room_name}({self.room.room_id}) 时room_json为None，结束录制')

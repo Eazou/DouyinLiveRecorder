@@ -4,6 +4,7 @@
 :date: 2023.01.17
 :brief: 主窗口
 """
+import json
 import tkinter as tk
 import tkinter.ttk as ttk
 from tkinter import simpledialog, messagebox
@@ -51,12 +52,28 @@ class ApplicationWin(ttk.Frame):
         self.grip_frame = grip_frame.GripFrame(room_list_frame)
         self.grip_frame.pack()
         self.grip_frame.bind('<Configure>', self._on_canvas_adjust)
-
     def reload_all(self):
         self.grip_frame.remove_all()
+      
+        # 读取 rooms.json 文件
+        with open('rooms.json', 'r', encoding='utf-8') as file:
+            rooms_data = json.load(file)
+      
+        # 创建一个字典，用于快速查找 lasttime
+        lasttime_dict = {room['id']: room.get('lasttime', '') for room in rooms_data}
+      
         for room in record_manager.get_rooms():
-            self.grip_frame.append(room.room_id, room.room_name, '未直播' if room.auto_record else '未监测',
+            room_id = room.room_id
+            lasttime = lasttime_dict.get(room_id, "")
+          
+            if lasttime and lasttime.strip():
+                status = lasttime
+            else:
+                status = '未直播' if room.auto_record else '未监测'
+          
+            self.grip_frame.append(room_id, room.room_name, status,
                                    room.auto_record, room.record_danmu, room.important)
+
 
     def set_state(self, room, text, color='#000000'):
         self.grip_frame.set(room.room_id, text, color)
